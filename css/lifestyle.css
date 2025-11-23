@@ -1,4 +1,4 @@
-/* ===== LIFESTYLE & GOALS PAGE ===== */
+/* ===== LIFESTYLE & GOALS — FINAL CLEAN BEM ===== */
 .lifestyle {
   background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
   min-height: 100vh;
@@ -20,22 +20,80 @@
   font-size: 3.8rem;
   text-align: center;
   color: #1b4332;
-  margin: 0 0 2rem 0;
+  margin: 0 0 1rem;
+}
+
+.lifestyle__subtitle {
+  text-align: center;
+  color: #155e3b;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.lifestyle__add-zone-btn {
+  display: block;
+  margin: 0 auto 3rem;
+  background: #155e3b;
+  padding: 1rem 2.5rem;
+  font-size: 1.2rem;
 }
 
 .lifestyle__zone {
-  margin: 3rem 0;
+  margin-bottom: 4rem;
   border-left: 8px solid;
   padding-left: 1.5rem;
 }
 
-.lifestyle__zone-title {
-  font-size: 2.2rem;
-  font-weight: bold;
-  margin: 0 0 1rem 0;
+.lifestyle__zone-header {
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.lifestyle__zone-title {
+  font-size: 2.4rem;
+  font-weight: bold;
+  margin: 0;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.lifestyle__zone-title[contenteditable="true"] {
+  background: #f0fff4;
+  outline: 2px solid #155e3b;
+}
+
+.lifestyle__edit-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.lifestyle__edit-btn:hover { opacity: 1; }
+
+.lifestyle__color-picker {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.lifestyle__map-zone {
+  font-weight: bold;
+  color: #155e3b;
+  margin: 0.5rem 0 1.5rem;
+  font-size: 1.1rem;
+}
+
+.lifestyle__map-zone span[contenteditable="true"] {
+  background: #e6f4ea;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
 }
 
 .lifestyle__table {
@@ -58,5 +116,21 @@
   vertical-align: top;
 }
 
-.lifestyle__table .num { width: 50px; text-align: center; font-weight: bold; }
-.lifestyle__table .sub { background: rgba(0,0,0,0.03); }
+.lifestyle__table td[contenteditable="true"]:focus {
+  outline: 2px solid #155e3b;
+  background: #f0fff4;
+}
+
+.lifestyle__add-sub-btn {
+  background: #e6f4ea;
+  color: #155e3b;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.lifestyle__add-sub-btn:hover {
+  background: #d0e8d5;
+}

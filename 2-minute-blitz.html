@@ -1,129 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2-Minute Blitz • Gamify Life</title>
-  <link rel="stylesheet" href="/css/global.css">
-  <link rel="stylesheet" href="/css/blitz.css">
-</head>
-<body class="blitz">
-  <a href="/index.html" class="btn btn--home">Home</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2-Minute Blitz • Gamify Life</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/blitz.css" />
+  </head>
+  <body class="blitz">
+    <a href="/index.html" class="btn btn--home">Home</a>
 
-  <div class="container">
-    <div class="blitz__container">
-      <h1 class="blitz__title">2-MINUTE BLITZ</h1>
-      <p class="blitz__subtitle">
-        Anytime you have a task that takes less than 2 minutes to complete and you do it immediately then you can get this reward.
-      </p>
-      <p class="blitz__xp"><strong>XP:</strong> +5 per task | <strong>Daily Limit:</strong> Unlimited</p>
+    <div class="container">
+      <div class="blitz__container">
+        <h1 class="blitz__title">2-MINUTE BLITZ</h1>
+        <p class="blitz__subtitle">
+          Anytime you have a task that takes less than 2 minutes to complete and
+          you do it immediately then you can get this reward.
+        </p>
+        <p class="blitz__xp">
+          <strong>XP:</strong> +5 per task |
+          <strong>Daily Limit:</strong> Unlimited
+        </p>
 
-      <table class="blitz__table" id="blitzTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Done</th>
-            <th>Task</th>
-            <th>Category</th>
-            <th>Sub-Category</th>
-            <th>XP</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <table class="blitz__table" id="blitzTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Done</th>
+              <th>Task</th>
+              <th>Category</th>
+              <th>Sub-Category</th>
+              <th>XP</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
 
-      <div class="blitz__add-row">
-        <input type="text" id="newTask" class="blitz__input" placeholder="What 2-minute task did you just crush?" autocomplete="off">
-        <button class="btn blitz__add-btn" onclick="addBlitz()">+ Add Blitz</button>
+        <div class="blitz__add-row">
+          <input
+            type="text"
+            id="newTask"
+            class="blitz__input"
+            placeholder="What 2-minute task did you just crush?"
+            autocomplete="off"
+          />
+          <button class="btn blitz__add-btn" onclick="addBlitz()">
+            + Add Blitz
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    const API_URL = "https://gamify-life-psi.vercel.app";
-    const table = document.getElementById("blitzTable").querySelector("tbody");
-    const today = new Date().toLocaleDateString();
-    let goals = [];  // will hold the latest goals data
+    <!-- Firebase + Full Logic (ONLY ONCE!) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script>
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyD_XLcVP2KSynm19akbXJOmt-bAMqOJ_2U",
+        authDomain: "gamify-life-2025.firebaseapp.com",
+        projectId: "gamify-life-2025",
+        storageBucket: "gamify-life-2025.firebasestorage.app",
+        messagingSenderId: "67156140086",
+        appId: "1:67156140086:web:1a2d8593998bbaa463b897",
+        measurementId: "G-L9KEJTSDJ1",
+      };
 
-    // Load goals + tasks
-    async function init() {
-      try {
-        const [goalsRes, blitzRes] = await Promise.all([
-          fetch(`${API_URL}/api/goals`),
-          fetch(`${API_URL}/api/blitz`)
-        ]);
-        goals = await goalsRes.json();
-        const tasks = await blitzRes.json();
-        table.innerHTML = "";
-        tasks.forEach(t => addRow(t));
-      } catch (e) { console.error("Load error:", e); }
-    }
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
 
-    async function saveBlitz() {
-      const tasks = Array.from(table.rows).map(r => ({
-        task: r.cells[2].textContent.trim(),
-        completed: r.cells[1].querySelector("input").checked,
-        date: r.cells[0].textContent,
-        category: r.cells[3].querySelector("select").value,
-        subcategory: r.cells[4].querySelector("select").value
-      }));
-      await fetch(`${API_URL}/api/blitz`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tasks)
+      let currentUser = null;
+      const API_URL = "https://gamify-life-psi.vercel.app";
+      const table = document
+        .getElementById("blitzTable")
+        .querySelector("tbody");
+      const today = new Date().toLocaleDateString();
+      let goals = [];
+
+      firebase.auth().onAuthStateChanged((user) => {
+        currentUser = user;
+        if (user) {
+          document.body.classList.add("logged-in");
+          document.getElementById("login-box")?.remove();
+          loadData();
+        } else {
+          document.body.classList.remove("logged-in");
+          showLogin();
+        }
       });
-    }
 
-    function addBlitz() {
-      const input = document.getElementById("newTask");
-      const task = input.value.trim();
-      if (!task) return;
-      addRow({ task, completed: true, date: today, category: "", subcategory: "" });
-      input.value = "";
-      input.focus();
-      saveBlitz();
-    }
-
-    function addRow(t) {
-      const row = table.insertRow();
-
-      // Build dropdowns from latest goals data
-      const catOptions = goals.map(z => `<option value="${z.name}" ${z.name===t.category?"selected":""}>${z.name}</option>`).join("");
-      const allSubs = goals.flatMap(z => z.subs.map(s => s.name));
-      const subOptions = allSubs.map(s => `<option ${s===t.subcategory?"selected":""}>${s}</option>`).join("");
-
-      row.innerHTML = `
-        <td>${t.date}</td>
-        <td><input type="checkbox" ${t.completed?"checked":""} onchange="toggle(this)"></td>
-        <td contenteditable="true" onblur="saveBlitz()">${t.task}</td>
-        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;">
-              <option value="">—</option>${catOptions}
-            </select></td>
-        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;">
-              <option value="">—</option>${subOptions}
-            </select></td>
-        <td class="xp-cell">${t.completed?"5":"0"}</td>
-        <td><button onclick="this.closest('tr').remove();saveBlitz()" style="background:#aaa;padding:6px 10px;">Delete</button></td>
+      function showLogin() {
+        if (document.getElementById("login-box")) return;
+        const box = document.createElement("div");
+        box.id = "login-box";
+        box.className = "login-modal";
+        box.innerHTML = `
+        <div class="login-modal__content">
+          <h2>Welcome to Gamify Life</h2>
+          <p>Sign in to save your data across devices</p>
+          <input id="email" placeholder="Email" class="login-modal__input"><br>
+          <input id="password" type="password" placeholder="Password" class="login-modal__input"><br>
+          <button onclick="login()" class="btn">Log In</button>
+          <button onclick="signup()" class="btn">Sign Up</button>
+          <button onclick="googleLogin()" class="btn">Google</button>
+          <p><small>or <a href="#" onclick="this.closest('#login-box').remove()">continue as guest</a> (no save)</small></p>
+        </div>
       `;
-      if (t.completed) row.classList.add("completed");
-    }
+        document.body.appendChild(box);
+      }
 
-    function toggle(cb) {
-      const row = cb.closest("tr");
-      const xp = row.querySelector(".xp-cell");
-      xp.textContent = cb.checked ? "5" : "0";
-      row.classList.toggle("completed", cb.checked);
-      saveBlitz();
-    }
+      window.login = () =>
+        firebase
+          .auth()
+          .signInWithEmailAndPassword(
+            document.getElementById("email").value,
+            document.getElementById("password").value
+          )
+          .catch((e) => alert(e.message));
+      window.signup = () =>
+        firebase
+          .auth()
+          .createUserWithEmailAndPassword(
+            document.getElementById("email").value,
+            document.getElementById("password").value
+          )
+          .catch((e) => alert(e.message));
+      window.googleLogin = () => {
+        const p = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(p);
+      };
 
-    // Load everything on start
-    init();
+      // === BLITZ LOGIC ===
+      async function loadData() {
+        try {
+          const headers = {
+            "X-User-ID": currentUser ? currentUser.uid : "guest",
+          };
+          const [goalsRes, blitzRes] = await Promise.all([
+            fetch(`${API_URL}/api/goals`, { headers }),
+            fetch(`${API_URL}/api/blitz`, { headers }),
+          ]);
+          goals = await goalsRes.json();
+          const tasks = await blitzRes.json();
+          table.innerHTML = "";
+          tasks.forEach((t) => addRow(t));
+        } catch (e) {
+          console.error("Load error:", e);
+        }
+      }
 
-    // Enter key adds task
-    document.getElementById("newTask").addEventListener("keypress", e => {
-      if (e.key === "Enter") addBlitz();
-    });
-  </script>
-</body>
+      async function saveBlitz() {
+        const tasks = Array.from(table.rows).map((r) => ({
+          task: r.cells[2].textContent.trim(),
+          completed: r.cells[1].querySelector("input").checked,
+          date: r.cells[0].textContent,
+          category: r.cells[3].querySelector("select").value,
+          subcategory: r.cells[4].querySelector("select").value,
+        }));
+        await fetch(`${API_URL}/api/blitz`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-User-ID": currentUser ? currentUser.uid : "guest",
+          },
+          body: JSON.stringify(tasks),
+        });
+      }
+
+      function addBlitz() {
+        const input = document.getElementById("newTask");
+        const task = input.value.trim();
+        if (!task) return;
+        addRow({
+          task,
+          completed: true,
+          date: today,
+          category: "",
+          subcategory: "",
+        });
+        input.value = "";
+        input.focus();
+        saveBlitz();
+      }
+
+      function addRow(t) {
+        const row = table.insertRow();
+        const catOptions = goals
+          .map(
+            (z) =>
+              `<option value="${z.name}" ${
+                z.name === t.category ? "selected" : ""
+              }>${z.name}</option>`
+          )
+          .join("");
+        const allSubs = goals.flatMap((z) => z.subs.map((s) => s.name));
+        const subOptions = allSubs
+          .map(
+            (s) =>
+              `<option ${s === t.subcategory ? "selected" : ""}>${s}</option>`
+          )
+          .join("");
+
+        row.innerHTML = `
+        <td>${t.date}</td>
+        <td><input type="checkbox" ${
+          t.completed ? "checked" : ""
+        } onchange="toggle(this)"></td>
+        <td contenteditable="true" onblur="saveBlitz()">${t.task}</td>
+        <td><select onchange="saveBlitz()" class="blitz__select"><option value="">—</option>${catOptions}</select></td>
+        <td><select onchange="saveBlitz()" class="blitz__select"><option value="">—</option>${subOptions}</select></td>
+        <td class="xp-cell">${t.completed ? "5" : "0"}</td>
+        <td><button class="blitz__delete-btn" onclick="this.closest('tr').remove();saveBlitz()">Delete</button></td>
+      `;
+        if (t.completed) row.classList.add("completed");
+      }
+
+      function toggle(cb) {
+        const row = cb.closest("tr");
+        row.querySelector(".xp-cell").textContent = cb.checked ? "5" : "0";
+        row.classList.toggle("completed", cb.checked);
+        saveBlitz();
+      }
+
+      document
+        .getElementById("newTask")
+        .addEventListener("keypress", (e) => e.key === "Enter" && addBlitz());
+      loadData();
+    </script>
+  </body>
 </html>
