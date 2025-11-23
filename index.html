@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gamify Life</title>
+    <script type="module" src="/main.js"></script>
+    <style>
+      body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+      .dashboard { background:white; padding:40px 50px; border-radius:20px; box-shadow:0 20px 40px rgba(0,0,0,0.2); text-align:center; max-width:900px; width:90%; }
+      h1 { font-size:3.5rem; margin-bottom:40px; color:#333; }
+      .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:20px; }
+      a { background:#667eea; color:white; padding:20px; font-size:1.3rem; border-radius:12px; text-decoration:none; transition:0.3s; box-shadow:0 8px 15px rgba(0,0,0,0.2); }
+      a:hover { transform:translateY(-5px); background:#5a67d8; box-shadow:0 15px 25px rgba(0,0,0,0.3); }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard">
+      <h1>Gamify Life</h1>
+      <div class="grid">
+        <a href="#">2-Minute Blitz</a>
+        <a href="#">Daily Quests</a>
+        <a href="#">Recurring Quests</a>
+        <a href="#">All Quests</a>
+        <a href="#">Deep Cleaning List</a>
+        <a href="#">XP System</a>
+        <a href="#">Power Ups</a>
+        <a href="#">Lifestyle/Goals</a>
+        <a href="#">World Map</a>
+        <a href="#">Avatar Levels</a>
+        <a href="#">Avatar Cards</a>
+      </div>
+    </div>
+  </body>
+</html>
