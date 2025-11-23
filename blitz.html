@@ -6,6 +6,7 @@
   <title>2-Minute Blitz • Gamify Life</title>
   <link rel="stylesheet" href="/css/global.css">
   <link rel="stylesheet" href="/css/blitz.css">
+  <link rel="stylesheet" href="/css/login.css">
 </head>
 <body class="blitz">
   <a href="/dashboard.html" class="btn btn--home">Home</a>
@@ -13,20 +14,12 @@
   <div class="container">
     <div class="blitz__container">
       <h1 class="blitz__title">2-MINUTE BLITZ</h1>
-      <p class="blitz__subtitle">Anytime you have a task that takes less than 2 minutes → do it immediately → claim the reward!</p>
+      <p class="blitz__subtitle">Anytime you have a task that takes less than 2 minutes → do it immediately → claim the rewardale!</p>
       <p class="blitz__xp"><strong>XP:</strong> +5 per task | <strong>Daily Limit:</strong> Unlimited</p>
 
       <table class="blitz__table" id="blitzTable">
         <thead>
-          <tr>
-            <th>Date</th>
-            <th>Done</th>
-            <th>Task</th>
-            <th>Category</th>
-            <th>Sub-Category</th>
-            <th>XP</th>
-            <th></th>
-          </tr>
+          <tr><th>Date</th><th>Done</th><th>Task</th><th>Category</th><th>Sub-Category</th><th>XP</th><th></th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -38,87 +31,10 @@
     </div>
   </div>
 
-  <!-- Shared Login -->
+  <!-- Shared Login + Blitz Logic -->
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <link rel="stylesheet" href="/css/login.css">
   <script src="/js/login.js"></script>
-
-  <!-- Blitz Logic (same as before — works perfectly) -->
-  <script>
-    const API_URL = "https://gamify-life-psi.vercel.app";
-    const table = document.getElementById("blitzTable").querySelector("tbody");
-    const today = new Date().toLocaleDateString();
-    let goals = [];
-
-    async function loadUserData() {
-      try {
-        const headers = { "X-User-ID": currentUser ? currentUser.uid : "guest" };
-        const [goalsRes, blitzRes] = await Promise.all([
-          fetch(`${API_URL}/api/goals`, { headers }),
-          fetch(`${API_URL}/api/blitz`, { headers })
-        ]);
-        goals = await goalsRes.json();
-        const tasks = await blitzRes.json();
-        table.innerHTML = "";
-        tasks.forEach(t => addRow(t));
-      } catch (e) { console.error(e); }
-    }
-
-    async function saveBlitz() {
-      const tasks = Array.from(table.rows).map(r => ({
-        task: r.cells[2].textContent.trim(),
-        completed: r.cells[1].querySelector("input").checked,
-        date: r.cells[0].textContent,
-        category: r.cells[3].querySelector("select").value,
-        subcategory: r.cells[4].querySelector("select").value
-      }));
-      await fetch(`${API_URL}/api/blitz`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-User-ID": currentUser ? currentUser.uid : "guest"
-        },
-        body: JSON.stringify(tasks)
-      });
-    }
-
-    function addBlitz() {
-      const input = document.getElementById("newTask");
-      const task = input.value.trim();
-      if (!task) return;
-      addRow({ task, completed: true, date: today, category: "", subcategory: "" });
-      input.value = "";
-      input.focus();
-      saveBlitz();
-    }
-
-    function addRow(t) {
-      const row = table.insertRow();
-      const catOptions = goals.map(z => `<option value="${z.name}" ${z.name===t.category?"selected":""}>${z.name}</option>`).join("");
-      const allSubs = goals.flatMap(z => z.subs.map(s => s.name));
-      const subOptions = allSubs.map(s => `<option ${s===t.subcategory?"selected":""}>${s}</option>`).join("");
-
-      row.innerHTML = `
-        <td>${t.date}</td>
-        <td><input type="checkbox" ${t.completed?"checked":""} onchange="toggle(this)"></td>
-        <td contenteditable="true" onblur="saveBlitz()">${t.task}</td>
-        <td><select onchange="saveBlitz()" class="blitz__select"><option value="">—</option>${catOptions}</select></td>
-        <td><select onchange="saveBlitz()" class="blitz__select"><option value="">—</option>${subOptions}</select></td>
-        <td class="xp-cell">${t.completed?"5":"0"}</td>
-        <td><button class="blitz__delete-btn" onclick="this.closest('tr').remove();saveBlitz()">Delete</button></td>
-      `;
-      if (t.completed) row.classList.add("completed");
-    }
-
-    function toggle(cb) {
-      const row = cb.closest("tr");
-      row.querySelector(".xp-cell").textContent = cb.checked ? "5" : "0";
-      row.classList.toggle("completed", cb.checked);
-      saveBlitz();
-    }
-
-    document.getElementById("newTask").addEventListener("keypress", e => e.key==="Enter" && addBlitz());
-  </script>
+  <script src="/js/blitz.js"></script>
 </body>
 </html>

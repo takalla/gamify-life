@@ -1,219 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lifestyle & Goals • Gamify Life</title>
-    <link rel="stylesheet" href="/css/global.css" />
-    <link rel="stylesheet" href="/css/lifestyle.css" />
-  </head>
-  <body class="lifestyle">
-    <a href="/index.html" class="btn btn--home">Home</a>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lifestyle & Goals • Gamify Life</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/lifestyle.css">
+  <link rel="stylesheet" href="/css/login.css">
+</head>
+<body class="lifestyle">
+  <a href="/dashboard.html" class="btn btn--home">Home</a>
 
-    <div class="container">
-      <div class="lifestyle__container">
-        <h1 class="lifestyle__title">Lifestyle & Goals</h1>
-        <p class="lifestyle__subtitle">
-          Click any text to edit • Changes save instantly
-        </p>
-        <button class="btn lifestyle__add-zone-btn" onclick="addZone()">
-          + Add New Zone
-        </button>
-        <div id="zones"></div>
-      </div>
+  <div class="container">
+    <div class="lifestyle__container">
+      <h1 class="lifestyle__title">Lifestyle & Goals</h1>
+      <p class="lifestyle__subtitle">Click any text to edit • Changes save instantly</p>
+      <button class="btn lifestyle__add-zone-btn" onclick="addZone()">+ Add New Zone</button>
+      <div id="zones"></div>
     </div>
+  </div>
 
-    <!-- Firebase + Login (same as above) -->
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-    <script>
-      // Your web app's Firebase configuration
-      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-      const firebaseConfig = {
-        apiKey: "AIzaSyD_XLcVP2KSynm19akbXJOmt-bAMqOJ_2U",
-        authDomain: "gamify-life-2025.firebaseapp.com",
-        projectId: "gamify-life-2025",
-        storageBucket: "gamify-life-2025.firebasestorage.app",
-        messagingSenderId: "67156140086",
-        appId: "1:67156140086:web:1a2d8593998bbaa463b897",
-        measurementId: "G-L9KEJTSDJ1",
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-      let currentUser = null;
-      const API_URL = "https://gamify-life-psi.vercel.app";
-
-      firebase.auth().onAuthStateChanged((user) => {
-        currentUser = user;
-        if (user) {
-          document.body.classList.add("logged-in");
-          document.getElementById("login-box")?.remove();
-          load();
-        } else {
-          document.body.classList.remove("logged-in");
-          showLogin();
-        }
-      });
-
-      // showLogin(), login(), signup(), googleLogin() → same as in blitz file above
-      function showLogin() {
-        /* copy from blitz file */
-      }
-      window.login = () => {
-        /* copy from blitz */
-      };
-      window.signup = () => {
-        /* copy from blitz */
-      };
-      window.googleLogin = () => {
-        const p = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(p);
-      };
-
-      const container = document.getElementById("zones");
-
-      async function load() {
-        try {
-          const headers = {
-            "X-User-ID": currentUser ? currentUser.uid : "guest",
-          };
-          const res = await fetch(`${API_URL}/api/goals`, { headers });
-          let data = await res.json();
-          if (!data || data.length === 0) {
-            data = defaultData();
-            await save(data);
-          }
-          render(data);
-        } catch (e) {
-          console.error(e);
-          render(defaultData());
-        }
-      }
-
-      async function save(data) {
-        await fetch(`${API_URL}/api/goals`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-User-ID": currentUser ? currentUser.uid : "guest",
-          },
-          body: JSON.stringify(data),
-        });
-      }
-
-      function render(data) {
-        container.innerHTML = "";
-        data.forEach((zone, zi) => {
-          const div = document.createElement("div");
-          div.className = "lifestyle__zone";
-          div.style.borderLeftColor = zone.color;
-          div.innerHTML = `
-          <div class="lifestyle__zone-header">
-            <h2 class="lifestyle__zone-title" style="color:${
-              zone.color
-            }" contenteditable="false">${zone.name}</h2>
-            <button class="lifestyle__edit-btn" onclick="toggleEdit(${zi})">Edit</button>
-            <input type="color" class="lifestyle__color-picker" value="${
-              zone.color
-            }" onchange="updateColor(${zi},this.value)">
-          </div>
-          <div class="lifestyle__map-zone">
-            Map Zone: <span contenteditable="false">${
-              zone.mapZone || "Click edit to set"
-            }</span>
-          </div>
-          <table class="lifestyle__table">
-            <thead><tr><th>#</th><th>Sub-Category</th><th>2026 Goal</th><th>Track</th><th>Result</th><th></th></tr></thead>
-            <tbody>
-              ${zone.subs
-                .map(
-                  (s, i) => `
-                <tr>
-                  <td class="num">${s.num}</td>
-                  <td contenteditable="true" onblur="updateSub(${zi},${i},'name',this.textContent)">${s.name}</td>
-                  <td contenteditable="true" onblur="updateSub(${zi},${i},'goal',this.textContent)">${s.goal}</td>
-                  <td contenteditable="true" onblur="updateSub(${zi},${i},'track',this.textContent)">${s.track}</td>
-                  <td contenteditable="true" onblur="updateSub(${zi},${i},'result',this.textContent)">${s.result}</td>
-                  <td><button class="lifestyle__add-sub-btn" onclick="removeSub(${zi},${i})">Delete</button></td>
-                </tr>`
-                )
-                .join("")}
-              <tr><td colspan="6"><button class="lifestyle__add-sub-btn" onclick="addSub(${zi})">+ Add Sub-Category</button></td></tr>
-            </tbody>
-          </table>
-          <hr style="margin:3rem 0;">
-        `;
-          container.appendChild(div);
-        });
-      }
-
-      window.toggleEdit = (zi) => {
-        const zoneDiv = container.children[zi];
-        const title = zoneDiv.querySelector(".lifestyle__zone-title");
-        const mapZone = zoneDiv.querySelector(".lifestyle__map-zone span");
-        const editing = title.contenteditable === "true";
-        title.contenteditable = !editing;
-        mapZone.contenteditable = !editing;
-        if (editing) {
-          load().then((d) => {
-            d[zi].name = title.textContent.trim();
-            d[zi].mapZone = mapZone.textContent.trim();
-            save(d);
-          });
-        }
-      };
-
-      window.updateColor = (zi, v) =>
-        load().then((d) => {
-          d[zi].color = v;
-          save(d);
-          render(d);
-        });
-      window.updateSub = (zi, i, f, v) =>
-        load().then((d) => {
-          d[zi].subs[i][f] = v.trim();
-          save(d);
-        });
-      window.addSub = (zi) =>
-        load().then((d) => {
-          d[zi].subs.push({
-            num: d[zi].subs.length + 1,
-            name: "New",
-            goal: "",
-            track: "",
-            result: "",
-          });
-          save(d);
-          render(d);
-        });
-      window.removeSub = (zi, i) =>
-        confirm("Delete forever?") &&
-        load().then((d) => {
-          d[zi].subs.splice(i, 1);
-          save(d);
-          render(d);
-        });
-      window.addZone = () =>
-        load().then((d) => {
-          d.push({
-            name: "New Zone",
-            color: "#000000",
-            mapZone: "My Map Zone",
-            subs: [],
-          });
-          save(d);
-          render(d);
-        });
-
-      function defaultData() {
-        return [
-          /* your full sheet data here — same as before */
-        ];
-      }
-
-      load();
-    </script>
-  </body>
+  <!-- Shared Login + Lifestyle Logic -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="/js/login.js"></script>
+  <script src="/js/lifestyle.js"></script>
+</body>
 </html>
