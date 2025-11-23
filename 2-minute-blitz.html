@@ -44,14 +44,20 @@
     const API_URL = "https://gamify-life-psi.vercel.app";
     const table = document.getElementById("blitzTable").querySelector("tbody");
     const today = new Date().toLocaleDateString();
+    let goals = [];  // will hold the latest goals data
 
-    async function loadBlitz() {
+    // Load goals + tasks
+    async function init() {
       try {
-        const res = await fetch(`${API_URL}/api/blitz`);
-        const tasks = await res.json();
+        const [goalsRes, blitzRes] = await Promise.all([
+          fetch(`${API_URL}/api/goals`),
+          fetch(`${API_URL}/api/blitz`)
+        ]);
+        goals = await goalsRes.json();
+        const tasks = await blitzRes.json();
         table.innerHTML = "";
         tasks.forEach(t => addRow(t));
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error("Load error:", e); }
     }
 
     async function saveBlitz() {
@@ -79,20 +85,24 @@
       saveBlitz();
     }
 
-    async function addRow(t) {
+    function addRow(t) {
       const row = table.insertRow();
-      const zones = await (await fetch(`${API_URL}/api/goals`)).json();
 
-      const catOptions = zones.map(z => `<option value="${z.name}">${z.name}</option>`).join("");
-      const allSubs = zones.flatMap(z => z.subs.map(s => s.name));
-      const subOptions = allSubs.map(s => `<option>${s}</option>`).join("");
+      // Build dropdowns from latest goals data
+      const catOptions = goals.map(z => `<option value="${z.name}" ${z.name===t.category?"selected":""}>${z.name}</option>`).join("");
+      const allSubs = goals.flatMap(z => z.subs.map(s => s.name));
+      const subOptions = allSubs.map(s => `<option ${s===t.subcategory?"selected":""}>${s}</option>`).join("");
 
       row.innerHTML = `
         <td>${t.date}</td>
         <td><input type="checkbox" ${t.completed?"checked":""} onchange="toggle(this)"></td>
         <td contenteditable="true" onblur="saveBlitz()">${t.task}</td>
-        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;"> <option>${t.category||""}</option>${catOptions}</select></td>
-        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;"> <option>${t.subcategory||""}</option>${subOptions}</select></td>
+        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;">
+              <option value="">—</option>${catOptions}
+            </select></td>
+        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;">
+              <option value="">—</option>${subOptions}
+            </select></td>
         <td class="xp-cell">${t.completed?"5":"0"}</td>
         <td><button onclick="this.closest('tr').remove();saveBlitz()" style="background:#aaa;padding:6px 10px;">Delete</button></td>
       `;
@@ -107,8 +117,13 @@
       saveBlitz();
     }
 
-    loadBlitz();
-    document.getElementById("newTask").addEventListener("keypress", e => e.key==="Enter" && addBlitz());
+    // Load everything on start
+    init();
+
+    // Enter key adds task
+    document.getElementById("newTask").addEventListener("keypress", e => {
+      if (e.key === "Enter") addBlitz();
+    });
   </script>
 </body>
 </html>
