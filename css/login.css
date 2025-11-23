@@ -1,0 +1,65 @@
+/* ===== FULL-S - SCREEN LOGIN MODAL ===== */
+#login-box {
+  position: fixed;
+  inset: 0;                                 /* covers entire screen */
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.login-modal__content {
+  background: white;
+  padding: 3rem 2.5rem;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  animation: loginFadeIn 0.4s ease-out;
+}
+
+@keyframes loginFadeIn {
+  from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-modal__content h2 {
+  margin: 0 0 0.5rem;
+  font-size: 2.2rem;
+  color: #155e3b;
+}
+
+.login-modal__content p {
+  margin: 0 0 1.5rem;
+  color: #555;
+}
+
+.login-modal__input {
+  width: 100%;
+  padding: 1rem;
+  margin: 0.7rem 0;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.login-modal__content .btn {
+  width: 100%;
+  margin: 0.7rem 0;
+  padding: 1rem;
+  font-size: 1.1rem;
+}
+
+.login-modal__content .btn:first-of-type { background: #155e3b; }
+.login-modal__content .btn:nth-of-type(2) { background: #2d6a4f; }
+.login-modal__content .btn:last-of-type { background: #4285f4; }
+
+.login-modal__content small a {
+  color: #155e3b;
+  text-decoration: underline;
+}
