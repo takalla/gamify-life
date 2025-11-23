@@ -13,43 +13,63 @@
   <div class="container">
     <div class="lifestyle__container">
       <h1 class="lifestyle__title">Lifestyle & Goals</h1>
-      <p style="text-align:center; color:#1b4332; font-size:1.3rem;">Click any text to edit • Changes save instantly</p>
-      <button class="btn" style="background:#2d6a4f; margin:2rem auto; display:block;">+ Add New Zone</button>
+      <p style="text-align:center;color:#155e3b;margin-bottom:2rem;">Click any text to edit • Changes save instantly</p>
+      <button class="btn" style="background:#155e3b;display:block;margin:0 auto 3rem;" onclick="addZone()">+ Add New Zone</button>
       <div id="zones"></div>
     </div>
   </div>
 
   <script>
-  const API_URL = "https://gamify-life-psi.vercel.app";
+    const API_URL = "https://gamify-life-psi.vercel.app";
+    const container = document.getElementById("zones");
 
-  const container = document.getElementById("zones");
+    async function load() {
+      const res = await fetch(`${API_URL}/api/goals`);
+      const data = await res.json();
+      render(data);
+    }
 
-  async function loadGoals() {
-    const res = await fetch(`${API_URL}/api/goals`);
-    const data = await res.json();
-    render(data);
-  }
+    async function save(data) {
+      await fetch(`${API_URL}/api/goals`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      });
+    }
 
-  function render(data) {
-    container.innerHTML = "";
-    data.forEach((zone, z) => {
-      const div = document.createElement("div");
-      div.className = "lifestyle__zone";
-      div.style.borderLeftColor = zone.color;
-      div.innerHTML = /* same HTML as before, just with onclicks calling saveGoals() */;
-      // (I'll send the full version in 2 seconds if you want — or just keep your current render and add saveGoals() calls)
-    });
-  }
+    function render(data) {
+      container.innerHTML = "";
+      data.forEach((zone, zi) => {
+        const div = document.createElement("div");
+        div.className = "lifestyle__zone";
+        div.style.borderLeftColor = zone.color;
+        div.innerHTML = `
+          <h2 class="lifestyle__zone-title" style="color:${zone.color}" contenteditable onblur="updateZone(${zi},this.textContent)">${zone.name}</h2>
+          <table class="lifestyle__table">
+            <tr><th>#</th><th>Sub-Category</th><th>2026 Goal</th><th>Track</th><th>Result</th><th></th></tr>
+            ${zone.subs.map((s,i)=>`
+              <tr>
+                <td class="num">${s.num}</td>
+                <td contenteditable onblur="update(${zi},${i},'name',this.textContent)">${s.name}</td>
+                <td contenteditable onblur="update(${zi},${i},'goal',this.textContent)">${s.goal}</td>
+                <td contenteditable onblur="update(${zi},${i},'track',this.textContent)">${s.track}</td>
+                <td contenteditable onblur="update(${zi},${i},'result',this.textContent)">${s.result}</td>
+                <td><button onclick="remove(${zi},${i})">Delete</button></td>
+              </tr>`).join("")}
+            <tr><td colspan="6"><button onclick="addSub(${zi})">+ Add Sub</button></td></tr>
+          </table>
+        `;
+        container.appendChild(div);
+      });
+    }
 
-  async function saveGoals() {
-    await fetch(`${API_URL}/api/goals`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(data)
-    });
-  }
+    window.update = (zi,i,f,v) => { load().then(d=> { d[zi].subs[i][f]=v.trim(); save(d); }); }
+    window.updateZone = (zi,v) => { load().then(d=> { d[zi].name=v.trim(); save(d); }); }
+    window.addSub = zi => { load().then(d=> { d[zi].subs.push({num:d[zi].subs.length+1,name:"New",goal:"",track:"",result:""}); save(d); render(d); }); }
+    window.remove = (zi,i) => { if(confirm("Delete forever?")) load().then(d=> { d[zi].subs.splice(i,1); save(d); render(d); }); }
+    window.addZone = () => { load().then(d=> { d.push({name:"New Zone",color:"#000000",subs:[]}); save(d); render(d); }); }
 
-  loadGoals();
-</script>
+    load();
+  </script>
 </body>
 </html>

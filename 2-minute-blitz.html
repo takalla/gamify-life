@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="/css/blitz.css">
 </head>
 <body class="blitz">
-
   <a href="/index.html" class="btn btn--home">Home</a>
 
   <div class="container">
@@ -23,11 +22,12 @@
         <thead>
           <tr>
             <th>Date</th>
-            <th>Completed</th>
+            <th>Done</th>
             <th>Task</th>
             <th>Category</th>
             <th>Sub-Category</th>
-            <th>XP Earned</th>
+            <th>XP</th>
+            <th></th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -40,88 +40,75 @@
     </div>
   </div>
 
-<script>
-  const API_URL = "https://gamify-life-psi.vercel.app";
+  <script>
+    const API_URL = "https://gamify-life-psi.vercel.app";
+    const table = document.getElementById("blitzTable").querySelector("tbody");
+    const today = new Date().toLocaleDateString();
 
-  const table = document.getElementById("blitzTable").querySelector("tbody");
-  const today = new Date().toLocaleDateString();
+    async function loadBlitz() {
+      try {
+        const res = await fetch(`${API_URL}/api/blitz`);
+        const tasks = await res.json();
+        table.innerHTML = "";
+        tasks.forEach(t => addRow(t));
+      } catch (e) { console.error(e); }
+    }
 
-  // Load from live API
-  async function loadBlitz() {
-    const res = await fetch(`${API_URL}/api/blitz`);
-    const tasks = await res.json();
-    table.innerHTML = "";
-    tasks.forEach(t => addRow(t.task, t.completed, t.date, t.category, t.subcategory));
-  }
+    async function saveBlitz() {
+      const tasks = Array.from(table.rows).map(r => ({
+        task: r.cells[2].textContent.trim(),
+        completed: r.cells[1].querySelector("input").checked,
+        date: r.cells[0].textContent,
+        category: r.cells[3].querySelector("select").value,
+        subcategory: r.cells[4].querySelector("select").value
+      }));
+      await fetch(`${API_URL}/api/blitz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tasks)
+      });
+    }
 
-  function addBlitz() {
-    const input = document.getElementById("newTask");
-    const task = input.value.trim();
-    if (!task) return;
-    addRow(task, true, today);
-    input.value = "";
-    input.focus();
-    saveBlitz();
-  }
+    function addBlitz() {
+      const input = document.getElementById("newTask");
+      const task = input.value.trim();
+      if (!task) return;
+      addRow({ task, completed: true, date: today, category: "", subcategory: "" });
+      input.value = "";
+      input.focus();
+      saveBlitz();
+    }
 
-  function addRow(task, completed = true, date = today, category = "", subcategory = "") {
-    const row = table.insertRow();
-    row.innerHTML = `
-      <td>${date}</td>
-      <td><input type="checkbox" ${completed?"checked":""} onchange="toggleComplete(this)"></td>
-      <td contenteditable="true" class="task-text" onblur="saveBlitz()">${task}</td>
-      <td><select onchange="saveBlitz()">${getCategoryOptions(category)}</select></td>
-      <td><select onchange="saveBlitz()">${getSubcategoryOptions(subcategory)}</select></td>
-      <td class="xp-cell">${completed?"5":"0"}</td>
-      <td><button onclick="deleteTask(this)">Delete</button></td>
-    `;
-    if (completed) row.classList.add("completed");
-  }
+    async function addRow(t) {
+      const row = table.insertRow();
+      const zones = await (await fetch(`${API_URL}/api/goals`)).json();
 
-  function toggleComplete(cb) {
-    const row = cb.closest("tr");
-    row.querySelector(".xp-cell").textContent = cb.checked ? "5" : "0";
-    row.classList.toggle("completed", cb.checked);
-    saveBlitz();
-  }
+      const catOptions = zones.map(z => `<option value="${z.name}">${z.name}</option>`).join("");
+      const allSubs = zones.flatMap(z => z.subs.map(s => s.name));
+      const subOptions = allSubs.map(s => `<option>${s}</option>`).join("");
 
-  function deleteTask(btn) {
-    if (confirm("Delete forever?")) btn.closest("tr").remove();
-    saveBlitz();
-  }
+      row.innerHTML = `
+        <td>${t.date}</td>
+        <td><input type="checkbox" ${t.completed?"checked":""} onchange="toggle(this)"></td>
+        <td contenteditable="true" onblur="saveBlitz()">${t.task}</td>
+        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;"> <option>${t.category||""}</option>${catOptions}</select></td>
+        <td><select onchange="saveBlitz()" style="width:100%;padding:8px;font-size:1rem;"> <option>${t.subcategory||""}</option>${subOptions}</select></td>
+        <td class="xp-cell">${t.completed?"5":"0"}</td>
+        <td><button onclick="this.closest('tr').remove();saveBlitz()" style="background:#aaa;padding:6px 10px;">Delete</button></td>
+      `;
+      if (t.completed) row.classList.add("completed");
+    }
 
-  async function saveBlitz() {
-    const tasks = Array.from(table.rows).map(r => ({
-      task: r.cells[2].textContent,
-      completed: r.cells[1].querySelector("input").checked,
-      date: r.cells[0].textContent,
-      category: r.cells[3].querySelector("select").value,
-      subcategory: r.cells[4].querySelector("select").value
-    }));
-    await fetch(`${API_URL}/api/blitz`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(tasks)
-    });
-  }
+    function toggle(cb) {
+      const row = cb.closest("tr");
+      const xp = row.querySelector(".xp-cell");
+      xp.textContent = cb.checked ? "5" : "0";
+      row.classList.toggle("completed", cb.checked);
+      saveBlitz();
+    }
 
-  // Category & Subcategory dropdowns (auto-refresh from live API)
-  async function getCategoryOptions(selected = "") {
-    const res = await fetch(`${API_URL}/api/goals`);
-    const zones = await res.json();
-    return `<option>${selected||"-"}</option>` + zones.map(z => `<option value="${z.name}" ${z.name===selected?"selected":""}>${z.name}</option>`).join("");
-  }
-
-  async function getSubcategoryOptions(selected = "") {
-    const res = await fetch(`${API_URL}/api/goals`);
-    const zones = await res.json();
-    const allSubs = zones.flatMap(z => z.subs.map(s => s.name));
-    return `<option>${selected||"-"}</option>` + allSubs.map(s => `<option ${s===selected?"selected":""}>${s}</option>`).join("");
-  }
-
-  // Refresh dropdowns every time we open the page
-  loadBlitz();
-  document.getElementById("newTask").addEventListener("keypress", e => { if (e.key === "Enter") addBlitz(); });
-</script>
+    loadBlitz();
+    document.getElementById("newTask").addEventListener("keypress", e => e.key==="Enter" && addBlitz());
+  </script>
 </body>
 </html>
