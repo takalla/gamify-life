@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2-Minute Blitz • Gamify Life</title>
+  <link rel="stylesheet" href="/css/global.css">
+  <link rel="stylesheet" href="/css/blitz.css">
+</head>
+<body class="blitz">
+
+  <a href="/index.html" class="btn btn--home">Home</a>
+
+  <div class="container">
+    <div class="blitz__container">
+      <h1 class="blitz__title">2-MINUTE BLITZ</h1>
+      <p class="blitz__subtitle">
+        Anytime you have a task that takes less than 2 minutes to complete and you do it immediately then you can get this reward.
+      </p>
+      <p class="blitz__xp"><strong>XP:</strong> +5 per task | <strong>Daily Limit:</strong> Unlimited</p>
+
+      <table class="blitz__table" id="blitzTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Completed</th>
+            <th>Task</th>
+            <th>Category</th>
+            <th>Sub-Category</th>
+            <th>XP Earned</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="blitz__add-row">
+        <input type="text" id="newTask" class="blitz__input" placeholder="What 2-minute task did you just crush?" autocomplete="off">
+        <button class="btn blitz__add-btn" onclick="addBlitz()">+ Add Blitz</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API_URL = "https://gamify-life-psi.vercel.app";
+
+  const table = document.getElementById("blitzTable").querySelector("tbody");
+  const today = new Date().toLocaleDateString();
+
+  // Load from live API
+  async function loadBlitz() {
+    const res = await fetch(`${API_URL}/api/blitz`);
+    const tasks = await res.json();
+    table.innerHTML = "";
+    tasks.forEach(t => addRow(t.task, t.completed, t.date, t.category, t.subcategory));
+  }
+
+  function addBlitz() {
+    const input = document.getElementById("newTask");
+    const task = input.value.trim();
+    if (!task) return;
+    addRow(task, true, today);
+    input.value = "";
+    input.focus();
+    saveBlitz();
+  }
+
+  function addRow(task, completed = true, date = today, category = "", subcategory = "") {
+    const row = table.insertRow();
+    row.innerHTML = `
+      <td>${date}</td>
+      <td><input type="checkbox" ${completed?"checked":""} onchange="toggleComplete(this)"></td>
+      <td contenteditable="true" class="task-text" onblur="saveBlitz()">${task}</td>
+      <td><select onchange="saveBlitz()">${getCategoryOptions(category)}</select></td>
+      <td><select onchange="saveBlitz()">${getSubcategoryOptions(subcategory)}</select></td>
+      <td class="xp-cell">${completed?"5":"0"}</td>
+      <td><button onclick="deleteTask(this)">Delete</button></td>
+    `;
+    if (completed) row.classList.add("completed");
+  }
+
+  function toggleComplete(cb) {
+    const row = cb.closest("tr");
+    row.querySelector(".xp-cell").textContent = cb.checked ? "5" : "0";
+    row.classList.toggle("completed", cb.checked);
+    saveBlitz();
+  }
+
+  function deleteTask(btn) {
+    if (confirm("Delete forever?")) btn.closest("tr").remove();
+    saveBlitz();
+  }
+
+  async function saveBlitz() {
+    const tasks = Array.from(table.rows).map(r => ({
+      task: r.cells[2].textContent,
+      completed: r.cells[1].querySelector("input").checked,
+      date: r.cells[0].textContent,
+      category: r.cells[3].querySelector("select").value,
+      subcategory: r.cells[4].querySelector("select").value
+    }));
+    await fetch(`${API_URL}/api/blitz`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(tasks)
+    });
+  }
+
+  // Category & Subcategory dropdowns (auto-refresh from live API)
+  async function getCategoryOptions(selected = "") {
+    const res = await fetch(`${API_URL}/api/goals`);
+    const zones = await res.json();
+    return `<option>${selected||"-"}</option>` + zones.map(z => `<option value="${z.name}" ${z.name===selected?"selected":""}>${z.name}</option>`).join("");
+  }
+
+  async function getSubcategoryOptions(selected = "") {
+    const res = await fetch(`${API_URL}/api/goals`);
+    const zones = await res.json();
+    const allSubs = zones.flatMap(z => z.subs.map(s => s.name));
+    return `<option>${selected||"-"}</option>` + allSubs.map(s => `<option ${s===selected?"selected":""}>${s}</option>`).join("");
+  }
+
+  // Refresh dropdowns every time we open the page
+  loadBlitz();
+  document.getElementById("newTask").addEventListener("keypress", e => { if (e.key === "Enter") addBlitz(); });
+</script>
+</body>
+</html>

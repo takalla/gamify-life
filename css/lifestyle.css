@@ -1,0 +1,62 @@
+/* ===== LIFESTYLE & GOALS PAGE ===== */
+.lifestyle {
+  background: linear-gradient(135deg, #a8e6cf 0%, #dcedc1 100%);
+  min-height: 100vh;
+  padding: 4rem 1rem;
+  display: grid;
+  place-items: center;
+}
+
+.lifestyle__container {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  max-width: 1300px;
+  width: 100%;
+}
+
+.lifestyle__title {
+  font-size: 3.8rem;
+  text-align: center;
+  color: #1b4332;
+  margin: 0 0 2rem 0;
+}
+
+.lifestyle__zone {
+  margin: 3rem 0;
+  border-left: 8px solid;
+  padding-left: 1.5rem;
+}
+
+.lifestyle__zone-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lifestyle__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 1.05rem;
+}
+
+.lifestyle__table th {
+  background: rgba(0,0,0,0.07);
+  text-align: left;
+  padding: 1rem;
+  font-weight: bold;
+}
+
+.lifestyle__table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.lifestyle__table .num { width: 50px; text-align: center; font-weight: bold; }
+.lifestyle__table .sub { background: rgba(0,0,0,0.03); }

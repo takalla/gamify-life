@@ -1,0 +1,10 @@
+{
+  "name": "gamify-life-api",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongodb": "^6.8.0",
+    "cors": "^2.8.5"
+  }
+}

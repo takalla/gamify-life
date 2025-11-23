@@ -1,0 +1,10 @@
+.dashboard { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: grid; place-items: center; padding: 4rem 0; }
+.dashboard__inner { background: white; padding: 3rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
+.dashboard__title { font-size: 4rem; margin-bottom: 3rem; color: #333; }
+.dashboard__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+.dashboard__link { padding: 1.5rem; border-radius: 16px; font-size: 1.4rem; font-weight: 700; color: white; text-decoration: none; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 0.3s ease; }
+.dashboard__link:hover { transform: translateY(-8px); }
+
+/* Page colors */
+.link--blitz     { background: rgba(255, 193, 7, 0.95); }   /* amber */
+.link--lifestyle { background: rgba(104, 203, 130, 0.95); } /* green */
